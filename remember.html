@@ -1,0 +1,226 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>STAIRS SURVIVAL</title>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+<script language="JavaScript" type="text/JavaScript">
+<!--
+
+/*
+미친개가 만든 모든 소스는 공개용 학습용을 목적으로 하며 배포 수정 편집에서 무한히
+자유롭습니다. 또한 설명을 최대한 자세하게 달았습니다.
+티비의 모 프로그램에 나오는 브레인 써바이벌의 색깔 기억했다가 그 색깔 계단을 찾아 올라가
+는 게임을 스크립트로 구현해본 것입니다.
+소스 진행은 게임을 시작하는 버튼을 누르면 먼저 여덟가지 색을 가지는 배열에서 임의로 열개를 추출 해서
+새 배열을 만듭니다. 그리고 이 배열을 가지고 일정한 시간 간격으로 레이어에 그 색을 보여줍니다.
+사용자가 계단을 올라가는 버튼을 누르면 옆에 레이어에 계단이 생성 되면서 마우스 클릭을 기다리게 됩니다.
+생성된 계단 레이어는 마우스 클릭때 x 좌표와 계단 레벨을 비교해서 계단 레벨이 틀리면 아무 반응도 하지 않고
+계단 레벨이 맞고 클릭점의 x 좌표와 색깔 배열의 순번이 같으면 그 계단 레이어는 '딩동뎅'이라는 멧세지가 써지며
+계단이 없어집니다. 이렇게 열 계단까지 올라가면 처음부터 열계단 맞출때까지의 시간이 계산되어 alert 창으로
+띄워줍니다.
+이 소스는 공개용 프로그램인 acroedit 로 제작 하였습니다.
+
+
+
+소스 : 미친개
+이멜 : maddog07@korea.com
+홈페지 : http://allzza.net/maddog
+제작 : 2002.8.14
+
+
+*/
+
+
+function MM_reloadPage(init) {  //reloads the window if Nav4 resized
+  if (init==true) with (navigator) {if ((appName=="Netscape")&&(parseInt(appVersion)==4)) {
+    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}
+  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();
+}
+MM_reloadPage(true);
+
+
+var basic_color = new Array('#ffffff','#ff0000','#00ff00','#0000ff',
+                    '#ffff00','#ff00ff','#00ffff','#777777');             //-- 처음 여덟개의 색을 가지고 있는 배열입니다. 이 배열은 랜덤으로 열개의 색을 만드는것에 쓰이기도 하고 또 계단을 만들때 계단의 테이블에 쓰이기도 합니다.
+m = 0;                                                                    //-- 랜덤으로 열개의 색이 배열로 만들어지고 나서 이 색을 레이어에 번갈아가며 보여주기 위한 변수.
+tags1 = '<table border=0 cellspacing=0 cellpadding=0 width=100% height=100%>'  //-- tags 로 시작하는 변수는 레이어에 테이블을 만들기 위한 변수.(아직 레이어 배경색도 만질줄 모르는 허접 미친개......ㅜ.ㅜ)
+tags2 = '</table>';
+gamestart = false;                                                          //-- 게임이 진행중인지 아닌지를 판별하고 상황에 따라 이 값을 변화시켜줍니다.
+_default = 0;                                                               //-- 계단 레이어를 클릭할때 이 값과 비교해서 자기 순번의 계단이 맞는지 판별하는 변수
+
+
+
+function basic_step()  {    //-- 계단 만드는 함수
+  tags3 = '';
+  for(c=0;c<8;c++)  {
+    tags3 += '<td width=44 height=13 bgcolor='
+             + basic_color[c] + '></td>';
+    }
+  for(x=0;x<10;x++) {
+    document.all.step[x].innerHTML = tags1 + '<tr>' + tags3 + '</tr>' + tags2;
+    }
+  }
+  
+function make_random_color()  {             //-- basic_color 배열에서 랜덤으로 열개를 뽑아 새배열을 만듬. 
+  random_color = new Array();               //-- 랜덤으로 열개의 색깔을 basic_color 배열에서 추출함
+  random_code_Array = new Array();          //-- 랜덤으로 만들어진 열개의 숫자를 배열요소로 하는 배열.
+  random_code = '';                         //-- 같은 색이 연이어 선택 되는것을 방지하는 변수
+  for(i=0;i<10;i++)  {
+     k = Math.floor(Math.random() * 8)
+     if(k==random_code) i--;
+     else  {
+         random_color[i] = basic_color[k];
+         random_code_Array[i] = k;
+         random_code = k;
+         }
+     }  
+  }                         
+
+
+function view_color()  {                     //-- viewcolor 레이어에 랜덤으로 선택된 색깔을 배경으로 하는 테이블을 만들어줌
+     if(m<10) {
+        document.all.viewcolor.innerHTML =  '<table border=0 width=100% height=100% cellspacing=0><tr><td width=100% height=100% bgcolor='
+                                            + random_color[m] + ' align=center valign=middle>' + (m+1) + 'Lv.</td></tr></table>';
+        ++m;
+        view_color_timer = setTimeout('view_color()',1500);
+        }
+     else {
+        clearTimeout(view_color_timer);
+        m = 0;
+        }
+     }
+            
+function delay_time()  {        //-- 게임에 걸린 시간을 폼안에 써줌
+  bbb = new Date();
+  _time = bbb - aaa;
+  _sec = Math.floor((_time % 60000) / 1000);
+  _min = Math.floor(_time / 60000);
+  document.myform.timedelay.value = ' 0 : ' + _min + ' : ' + _sec;
+  delaytimer = setTimeout('delay_time()',100);
+  }
+
+function regame()  {               //-- 게임을 시작할때 호출 되는 함수
+  if(gamestart)  {                 //-- 게임중에 잘못 알고 눌렀거나 실수로 눌렀을때 확인창을 띄움
+        if(confirm('Replay?'))  {
+            location.reload();
+            }
+        else  {}
+        }
+  else    { 
+      gamestart = true;
+      aaa = new Date();            //-- 게임 시작 시간을 변수로 정의하고 delay_time 함수에서 현재시간과의 빼기연산을 이용해서 게임에 걸린 시간을 계산함
+      delay_time();
+      make_random_color();
+      view_color();
+      }
+  }
+  
+function go_step()  {             //-- 랜덤으로 선택된 색깔을 보다가 계단을 오를때 호출 되는 함수
+  if(gamestart)  {                //-- 게임중이라면 색깔 보여주는것을 멈추고 검은 배경의 테이블을 띄워줌
+     clearTimeout(view_color_timer);
+     document.all.viewcolor.innerHTML =  '<table border=0 width=100% height=100% cellspacing=0><tr><td width=100% height=100% bgcolor='
+                                       + '#000000></td></tr></table>';
+        
+     basic_step();                 //-- 검은 배경의 테이블을 띄워주고 나서 계단을 만들고 사용자의 마우스 클릭을 기다림
+     }
+  else alert('You must click the GAME START button first.');      //-- 게임 시작 버튼이 눌리지 않은 상태에서는 경고창을 띄워 제대로 시작하게 함
+  }
+  
+function on_step(clickpo,clickstep) {                   //-- 계단 레이어를 클릭할때 마우스 x 좌표와 계단의 단계를 인수로 받아 함수를 실행함
+  if(gamestart)  {                                      //-- 게임중일때 다음 루틴을 진행하고 게임중이 아닐땐 적당한 멧세지의 경고창을 띄워줌
+      clickpoint = Math.floor((clickpo+12) / 44) - 1;   //-- 마우스 x 좌표와 색상 테이블의 순번이 맞게 적당히 계산해서 clickpoint 변수를 산출해냄
+      if(clickstep!=_default)  {}                       //-- 클릭된 계단 레이어가 색깔을 알아맞춰야할 계단 레이어가 아닌 엉뚱한 계단 레이어일때 무반응.
+      else  {                                       
+          if(clickpoint!=random_code_Array[clickstep])  {                  //-- 클릭된 위치와 random_code_Array 를 비교해서 틀리면 계단 레이어를 몽땅 비우고 필요한 변수를 원래 상태로 돌림
+               for(abab=0;abab<10;abab++)    document.all.step[abab].innerHTML = 'Nope!';
+               m=0; _default=0; view_color();
+               }
+          else {                                                         //-- 제대로 색을 맞췄을때
+                if(clickstep!=9) {                                       //-- 맞춘 색이 마지막 단계가 아닐때
+                   document.all.step[9 - clickstep].innerHTML = 'Correct!';
+                   _default++;
+                   }
+                else  {                                                  //-- 마지막까지 맞췄으면 타이머를 스톱 시키고 걸린 시간을 알려주며 필요한 변수를 초기화 시켜 다음 게임을 준비한다.
+                    clearTimeout(delaytimer);
+                    document.all.step[9 - clickstep].innerHTML = 'Correct!';
+                    gamestart = false; m=0; _default = 0;
+                    alert('You spend' + _min + 'minute' + _sec + 'seconds.');
+                    }
+                }
+            }
+      }
+  else   alert('You must click the GAME START button first.');
+  }  
+//-->
+</script>
+</head>
+
+<body bgcolor="#0099FF">
+
+<div id="step" style="position:absolute; left:30px; top:25px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'9')"></div> 
+<div id="step" style="position:absolute; left:30px; top:60px; width:352px; height:13px; z-index:1; border-width:1; border-style:solid; border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'8')"></div> 
+<div id="step" style="position:absolute; left:30px; top:95px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'7')"></div>
+<div id="step" style="position:absolute; left:30px; top:130px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'6')"></div>
+<div id="step" style="position:absolute; left:30px; top:165px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'5')"></div>
+<div id="step" style="position:absolute; left:30px; top:200px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'4')"></div>
+<div id="step" style="position:absolute; left:30px; top:235px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'3')"></div>
+<div id="step" style="position:absolute; left:30px; top:270px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'2')"></div>
+<div id="step" style="position:absolute; left:30px; top:305px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'1')"></div>
+<div id="step" style="position:absolute; left:30px; top:340px; width:352px; height:13px; z-index:1;border-width:1;border-style:solid;border-color:#000000;cursor:crosshair" onclick="on_step(event.x,'0')"></div>
+<!-- 열개의 계단 레이어 같은 이름의 레이어가 여러개일땐 배열로 접근이 가능하다.-->
+
+
+<div id="viewcolor" style="position:absolute; left:469px; top:25px; width:150px; height:70px; border-width:1; border-style:solid; border-color:#000000; background-color: '#000000'; layer-background-color: '#000000'; border: 1px solid #000000;"></div>
+<!-- 랜덤으로 선택된 열개의 색을 일정한 시간 간격(여기서는 1초로 맞춰짐)으로 보여주는 레이어 -->
+
+
+<div id="delaytime" style="position:absolute; left:33px; top:395px; width:190px; height:29px; z-index:4">
+  <form action="" name="myform" id="myform">
+    <input name="timedelay" type="text" value="0 : 00 : 00 " size="15">
+  </form>
+</div>
+<!-- 게임에 걸린 시간을 text 에 보여주기 위한 form 이 들어있는 레이어 -->
+
+
+<div id="playgame" style="position:absolute; left:469px; top:123px; width:150px; height:21px; z-index:5">
+  <form name="form1" action="">
+    <input name="gostep" type="button" id="gostep" value="Climbing stairs" onclick="go_step()">
+  </form>
+</div>
+<!-- 색깔을 보다가 계단을 오를때 누르는 버튼이 들어있는 레이어 -->
+
+
+<div id="reset" style="position:absolute; left:466px; top:376px; width:179px; height:37px; z-index:6">
+  <form action="" method="" name="_regame" id="_regame">
+    <input type="button" name="restart" value="GAME START" onclick="regame()">
+  </form>
+</div>
+<!-- 처음 게임을 시작할때 누르는 버튼이 들어있는 레이어 -->
+
+
+<div id="Layer1" style="position:absolute; left:390px; top:25px; width:53px; height:16px; z-index:7"><strong><font size="2">Lv.10 
+</font></strong></div>
+<div id="Layer2" style="position:absolute; left:398px; top:59px; width:54px; height:14px; z-index:8"><strong><font size="2"> 
+  Lv.9</font></strong></div>
+<div id="Layer3" style="position:absolute; left:398px; top:96px; width:55px; height:15px; z-index:9"><strong><font size="2">Lv.8 
+</font></strong></div>
+<div id="Layer4" style="position:absolute; left:396px; top:129px; width:59px; height:15px; z-index:10"><strong><font size="2">Lv.7 
+</font></strong></div>
+<div id="Layer5" style="position:absolute; left:396px; top:165px; width:62px; height:16px; z-index:11"><strong><font size="2">Lv.6 
+</font></strong></div>
+<div id="Layer6" style="position:absolute; left:395px; top:199px; width:64px; height:17px; z-index:12"><strong><font size="2">Lv.5 
+</font></strong></div>
+<div id="Layer7" style="position:absolute; left:395px; top:234px; width:65px; height:16px; z-index:13"><strong><font size="2">Lv.4 
+</font></strong></div>
+<div id="Layer8" style="position:absolute; left:395px; top:270px; width:66px; height:16px; z-index:14"><strong><font size="2">Lv.3 
+</font></strong></div>
+<div id="Layer9" style="position:absolute; left:393px; top:304px; width:68px; height:18px; z-index:15"><strong><font size="2">Lv.2 
+</font></strong></div>
+<div id="Layer10" style="position:absolute; left:394px; top:340px; width:68px; height:16px; z-index:16"><strong><font size="2">Lv.1 
+ </font></strong></div>
+<!-- 계단 레이어 옆에 몇번째 계단인지 알려주기 위한 새끼레이어 -->
+
+  
+</body>
+</html>
+
